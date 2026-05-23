@@ -34,6 +34,7 @@ http.createServer((req, res) => {
 }).listen(PORT);
 
 const OWNER_ID = process.env.OWNER_ID || "1434471542187884565";
+const CONTRO_ROLE_ID = "1507748485309403378";
 const authorizedFilePath = path.join(__dirname, 'authorized.json');
 let authorizedUsers = new Set();
 
@@ -111,7 +112,12 @@ tokens.forEach((token, index) => {
 
       const userId = message.author.id;
       const isOwner = userId === OWNER_ID;
-      const authorized = isOwner || authorizedUsers.has(userId);
+      
+      // Check if user has the 'contro' role (ID: 1507748485309403378)
+      const member = message.member || (message.guild ? await message.guild.members.fetch(userId).catch(() => null) : null);
+      const hasControRole = member ? member.roles.cache.has(CONTRO_ROLE_ID) : false;
+
+      const authorized = isOwner || hasControRole || authorizedUsers.has(userId);
 
       // Silently ignore if not authorized
       if (!authorized) return;
@@ -232,7 +238,12 @@ tokens.forEach((token, index) => {
     client.on('interactionCreate', async interaction => {
       const userId = interaction.user.id;
       const isOwner = userId === OWNER_ID;
-      const authorized = isOwner || authorizedUsers.has(userId);
+      
+      // Check if user has the 'contro' role (ID: 1507748485309403378)
+      const member = interaction.member || (interaction.guild ? await interaction.guild.members.fetch(userId).catch(() => null) : null);
+      const hasControRole = member ? member.roles.cache.has(CONTRO_ROLE_ID) : false;
+
+      const authorized = isOwner || hasControRole || authorizedUsers.has(userId);
 
       if (!authorized) {
         return interaction.reply({ content: '❌ You are not authorized to control the fleet!', ephemeral: true });
